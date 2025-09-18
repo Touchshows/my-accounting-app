@@ -944,14 +944,24 @@ class UIManager {
                 
                 if (confirm(confirmMessage)) {
                     let importedCount = 0;
-                    
-                    // 导入分类（先导入分类，确保交易记录能找到对应分类）
+                    const categoryIdMap = {}; // 用于映射旧ID到新ID
+
+                    // 1. 导入分类并创建ID映射
                     if (data.categories && Array.isArray(data.categories)) {
+                        const existingCategories = this.dataManager.getCategories();
                         data.categories.forEach(category => {
-                            if (!this.dataManager.getCategories().find(c => c.id === category.id)) {
-                                // 确保分类有必要的字段
+                            // 优先通过名称和类型查找现有分类
+                            const existingCat = existingCategories.find(c => c.name === category.name && c.type === category.type);
+                            
+                            if (existingCat) {
+                                // 如果分类已存在，则映射旧ID到现有ID
+                                categoryIdMap[category.id] = existingCat.id;
+                            } else {
+                                // 如果分类不存在，则添加新分类并映射
+                                const newId = Utils.generateId();
+                                categoryIdMap[category.id] = newId;
                                 const categoryToAdd = {
-                                    id: category.id || Utils.generateId(),
+                                    id: newId,
                                     name: category.name || '未命名分类',
                                     type: category.type || 'expense',
                                     color: category.color || '#666666',
@@ -961,26 +971,27 @@ class UIManager {
                             }
                         });
                     }
-                    
-                    // 导入交易记录
+
+                    // 2. 导入交易记录，使用ID映射
                     data.transactions.forEach(transaction => {
-                        // 检查是否已存在相同的交易记录
                         const existingTransactions = this.dataManager.getTransactions();
-                        const isDuplicate = existingTransactions.some(existing => 
+                        // 使用映射后的 categoryId 进行重复性检查
+                        const newCategoryId = categoryIdMap[transaction.categoryId] || transaction.categoryId;
+
+                        const isDuplicate = existingTransactions.some(existing =>
                             existing.date === transaction.date &&
                             existing.amount === transaction.amount &&
                             existing.type === transaction.type &&
-                            existing.categoryId === transaction.categoryId &&
+                            existing.categoryId === newCategoryId && // 使用新的ID检查
                             existing.description === transaction.description
                         );
-                        
+
                         if (!isDuplicate) {
-                            // 确保交易记录有必要的字段
                             const transactionToAdd = {
-                                id: Utils.generateId(), // 总是生成新的ID避免冲突
+                                id: Utils.generateId(),
                                 amount: parseFloat(transaction.amount) || 0,
                                 type: transaction.type || 'expense',
-                                categoryId: transaction.categoryId,
+                                categoryId: newCategoryId, // 使用新的ID
                                 description: transaction.description || '',
                                 date: transaction.date || new Date().toISOString().split('T')[0]
                             };
@@ -988,20 +999,22 @@ class UIManager {
                             importedCount++;
                         }
                     });
-                    
-                    // 导入预算（如果存在）
+
+                    // 3. 导入预算，同样使用ID映射
                     if (data.budgets && Array.isArray(data.budgets)) {
                         data.budgets.forEach(budget => {
                             const existingBudgets = this.dataManager.getBudgets();
-                            const isDuplicate = existingBudgets.some(existing => 
-                                existing.categoryId === budget.categoryId &&
+                            const newCategoryId = categoryIdMap[budget.categoryId] || budget.categoryId;
+
+                            const isDuplicate = existingBudgets.some(existing =>
+                                existing.categoryId === newCategoryId && // 使用新的ID检查
                                 existing.period === budget.period
                             );
-                            
+
                             if (!isDuplicate) {
                                 const budgetToAdd = {
                                     id: Utils.generateId(),
-                                    categoryId: budget.categoryId,
+                                    categoryId: newCategoryId, // 使用新的ID
                                     amount: parseFloat(budget.amount) || 0,
                                     period: budget.period || 'monthly',
                                     createdAt: budget.createdAt || new Date().toISOString()
