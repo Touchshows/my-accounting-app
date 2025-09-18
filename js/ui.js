@@ -928,44 +928,171 @@ class UIManager {
             try {
                 const data = JSON.parse(e.target.result);
                 
-                if (data.transactions && Array.isArray(data.transactions)) {
-                    // 确认导入
-                    if (confirm(`确定要导入 ${data.transactions.length} 条交易记录吗？这将覆盖现有数据。`)) {
-                        // 导入交易记录
-                        data.transactions.forEach(transaction => {
-                            this.dataManager.addTransaction(transaction);
+                // 验证数据格式
+                if (!data.transactions || !Array.isArray(data.transactions)) {
+                    this.showNotification('无效的数据格式：缺少交易记录', 'error');
+                    return;
+                }
+                
+                // 显示导入预览信息
+                const importInfo = this.analyzeImportData(data);
+                const confirmMessage = `准备导入数据：\n` +
+                    `• 交易记录：${importInfo.transactions.total} 条（新增 ${importInfo.transactions.new} 条，重复 ${importInfo.transactions.duplicate} 条）\n` +
+                    `• 分类：${importInfo.categories.total} 个（新增 ${importInfo.categories.new} 个，重复 ${importInfo.categories.duplicate} 个）\n` +
+                    `• 预算：${importInfo.budgets.total} 个（新增 ${importInfo.budgets.new} 个，重复 ${importInfo.budgets.duplicate} 个）\n\n` +
+                    `重复的数据将被跳过，确定要继续导入吗？`;
+                
+                if (confirm(confirmMessage)) {
+                    let importedCount = 0;
+                    
+                    // 导入分类（先导入分类，确保交易记录能找到对应分类）
+                    if (data.categories && Array.isArray(data.categories)) {
+                        data.categories.forEach(category => {
+                            if (!this.dataManager.getCategories().find(c => c.id === category.id)) {
+                                // 确保分类有必要的字段
+                                const categoryToAdd = {
+                                    id: category.id || Utils.generateId(),
+                                    name: category.name || '未命名分类',
+                                    type: category.type || 'expense',
+                                    color: category.color || '#666666',
+                                    icon: category.icon || '💰'
+                                };
+                                this.dataManager.addCategory(categoryToAdd);
+                            }
                         });
-                        
-                        // 导入分类（如果存在）
-                        if (data.categories && Array.isArray(data.categories)) {
-                            data.categories.forEach(category => {
-                                if (!this.dataManager.getCategories().find(c => c.id === category.id)) {
-                                    this.dataManager.addCategory(category);
-                                }
-                            });
-                        }
-                        
-                        // 刷新当前页面
-                        const currentPage = document.querySelector('.page.active');
-                        if (currentPage) {
-                            const pageId = currentPage.id.replace('-page', '');
-                            if (pageId === 'dashboard') this.loadDashboard();
-                            else if (pageId === 'transactions') this.loadTransactionsPage();
-                            else if (pageId === 'statistics') this.loadStatisticsPage();
-                        }
-                        
-                        this.showNotification('数据导入成功！', 'success');
                     }
-                } else {
-                    this.showNotification('无效的数据格式', 'error');
+                    
+                    // 导入交易记录
+                    data.transactions.forEach(transaction => {
+                        // 检查是否已存在相同的交易记录
+                        const existingTransactions = this.dataManager.getTransactions();
+                        const isDuplicate = existingTransactions.some(existing => 
+                            existing.date === transaction.date &&
+                            existing.amount === transaction.amount &&
+                            existing.type === transaction.type &&
+                            existing.categoryId === transaction.categoryId &&
+                            existing.description === transaction.description
+                        );
+                        
+                        if (!isDuplicate) {
+                            // 确保交易记录有必要的字段
+                            const transactionToAdd = {
+                                id: Utils.generateId(), // 总是生成新的ID避免冲突
+                                amount: parseFloat(transaction.amount) || 0,
+                                type: transaction.type || 'expense',
+                                categoryId: transaction.categoryId,
+                                description: transaction.description || '',
+                                date: transaction.date || new Date().toISOString().split('T')[0]
+                            };
+                            this.dataManager.addTransaction(transactionToAdd);
+                            importedCount++;
+                        }
+                    });
+                    
+                    // 导入预算（如果存在）
+                    if (data.budgets && Array.isArray(data.budgets)) {
+                        data.budgets.forEach(budget => {
+                            const existingBudgets = this.dataManager.getBudgets();
+                            const isDuplicate = existingBudgets.some(existing => 
+                                existing.categoryId === budget.categoryId &&
+                                existing.period === budget.period
+                            );
+                            
+                            if (!isDuplicate) {
+                                const budgetToAdd = {
+                                    id: Utils.generateId(),
+                                    categoryId: budget.categoryId,
+                                    amount: parseFloat(budget.amount) || 0,
+                                    period: budget.period || 'monthly',
+                                    createdAt: budget.createdAt || new Date().toISOString()
+                                };
+                                this.dataManager.addBudget(budgetToAdd);
+                            }
+                        });
+                    }
+                    
+                    // 刷新当前页面
+                    const currentPage = document.querySelector('.page.active');
+                    if (currentPage) {
+                        const pageId = currentPage.id.replace('-page', '');
+                        if (pageId === 'dashboard') this.loadDashboard();
+                        else if (pageId === 'transactions') this.loadTransactionsPage();
+                        else if (pageId === 'statistics') this.loadStatisticsPage();
+                        else if (pageId === 'categories') this.loadCategoriesPage();
+                        else if (pageId === 'budgets') this.loadBudgetsPage();
+                    }
+                    
+                    this.showNotification(`数据导入成功！共导入 ${importedCount} 条新交易记录`, 'success');
                 }
             } catch (error) {
                 console.error('导入数据失败:', error);
-                this.showNotification('导入失败，请检查文件格式', 'error');
+                this.showNotification('导入失败，请检查文件格式是否正确', 'error');
             }
         };
         
         reader.readAsText(file);
+    }
+    
+    analyzeImportData(data) {
+        const existingTransactions = this.dataManager.getTransactions();
+        const existingCategories = this.dataManager.getCategories();
+        const existingBudgets = this.dataManager.getBudgets();
+        
+        const result = {
+            transactions: { total: 0, new: 0, duplicate: 0 },
+            categories: { total: 0, new: 0, duplicate: 0 },
+            budgets: { total: 0, new: 0, duplicate: 0 }
+        };
+        
+        // 分析交易记录
+        if (data.transactions && Array.isArray(data.transactions)) {
+            result.transactions.total = data.transactions.length;
+            data.transactions.forEach(transaction => {
+                const isDuplicate = existingTransactions.some(existing => 
+                    existing.date === transaction.date &&
+                    existing.amount === transaction.amount &&
+                    existing.type === transaction.type &&
+                    existing.categoryId === transaction.categoryId &&
+                    existing.description === transaction.description
+                );
+                if (isDuplicate) {
+                    result.transactions.duplicate++;
+                } else {
+                    result.transactions.new++;
+                }
+            });
+        }
+        
+        // 分析分类
+        if (data.categories && Array.isArray(data.categories)) {
+            result.categories.total = data.categories.length;
+            data.categories.forEach(category => {
+                const isDuplicate = existingCategories.some(existing => existing.id === category.id);
+                if (isDuplicate) {
+                    result.categories.duplicate++;
+                } else {
+                    result.categories.new++;
+                }
+            });
+        }
+        
+        // 分析预算
+        if (data.budgets && Array.isArray(data.budgets)) {
+            result.budgets.total = data.budgets.length;
+            data.budgets.forEach(budget => {
+                const isDuplicate = existingBudgets.some(existing => 
+                    existing.categoryId === budget.categoryId &&
+                    existing.period === budget.period
+                );
+                if (isDuplicate) {
+                    result.budgets.duplicate++;
+                } else {
+                    result.budgets.new++;
+                }
+            });
+        }
+        
+        return result;
     }
 
     clearAllData() {
@@ -1333,7 +1460,7 @@ class UIManager {
 
          // 趋势图表相关方法
          initializeTrendChart() {
-             this.updateTrendChart('6months', 'monthly');
+             this.updateTrendChart('30days', 'daily');
          }
          
          switchTrendType(type) {
