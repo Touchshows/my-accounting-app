@@ -1,0 +1,33 @@
+name: Deploy Accounting App to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  pages: write
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 将 accounting-app 目录作为站点根打包成 Pages artifact
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: accounting-app
+
+  deploy:
+    environment:
+      name: github-pages
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
