@@ -755,11 +755,19 @@ class UIManager {
         const importFile = document.getElementById('import-file');
         if (importBtn && importFile) {
             importBtn.addEventListener('click', () => {
+                // 确保每次点击都能触发 change（即使选择同一文件）
+                importFile.value = '';
+                // iOS Safari 有时需要先聚焦再点击
+                try { importFile.focus(); } catch (e) {}
                 importFile.click();
             });
 
             importFile.addEventListener('change', (e) => {
-                this.importData(e.target.files[0]);
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                this.importData(file);
+                // 处理完立即清空，避免下次选同一文件不触发 change
+                setTimeout(() => { e.target.value = ''; }, 0);
             });
         }
 
@@ -1041,7 +1049,7 @@ class UIManager {
             }
         };
         
-        reader.readAsText(file);
+        reader.readAsText(file, 'utf-8');
     }
     
     analyzeImportData(data) {
