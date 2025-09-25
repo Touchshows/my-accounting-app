@@ -513,3 +513,65 @@ body {
         border-radius: 0;
     }
 }
+
+/* Mobile polish: iOS safe areas and reduced gradient intensity */
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.header {
+  padding-top: env(safe-area-inset-top);
+}
+
+.main {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Smooth scrolling on iOS lists */
+.transaction-list {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Compact buttons on tablets/phones */
+@media (max-width: 768px) {
+  .nav-btn {
+    padding: 0.55rem 0.9rem;
+    border-radius: 14px;
+  }
+}
+
+/* Small-phone refinements */
+@media (max-width: 480px) {
+  body {
+    background: var(--bg-primary); /* Remove strong gradient on small screens */
+  }
+  .container {
+    padding: 0 14px;
+  }
+  .main {
+    padding: 1rem 0 calc(1rem + env(safe-area-inset-bottom));
+  }
+  .nav {
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .balance-card,
+  .income-card,
+  .expense-card,
+  .recent-transactions,
+  .settings-header,
+  .settings-section {
+    margin-left: -14px;
+    margin-right: -14px;
+    border-radius: 12px;
+  }
+  .balance-card {
+    /* Use cleaner primary gradient on mobile balance card */
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  }
+  .balance-amount,
+  .income-amount,
+  .expense-amount {
+    font-size: 2.2rem;
+  }
+}
