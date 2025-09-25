@@ -104,15 +104,47 @@ class Utils {
 
     // 下载文件
     static downloadFile(content, filename, contentType = 'application/json') {
-        const blob = new Blob([content], { type: contentType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+        // Prefer Web Share API on iOS Safari to avoid WebKitBlobResource error
+        if (isIOS && navigator.share) {
+            try {
+                const file = new File([content], filename, { type: contentType });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    return navigator.share({ files: [file], title: filename, text: '导出数据' }).catch(() => {
+                        // fall through to blob download if user cancels
+                    });
+                }
+            } catch (err) {
+                // ignore and fall back below
+            }
+        }
+
+        // Fallback: blob + temporary anchor (works for most browsers)
+        try {
+            const data = typeof content === 'string' ? content : JSON.stringify(content);
+            const blob = new Blob([data], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        } catch (err) {
+            // Final fallback for strict Safari cases: open data URL
+            try {
+                const dataStr = typeof content === 'string' ? content : JSON.stringify(content);
+                const dataUrl = `data:${contentType};charset=utf-8,${encodeURIComponent(dataStr)}`;
+                window.location.href = dataUrl;
+            } catch (e) {
+                console.error('下载失败:', e);
+            }
+        }
     }
 
     // 读取文件

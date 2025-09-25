@@ -842,18 +842,10 @@ class UIManager {
              };
 
              const jsonString = JSON.stringify(data, null, 2);
-             const blob = new Blob([jsonString], { type: 'application/json' });
-             const url = URL.createObjectURL(blob);
-             
-             const a = document.createElement('a');
-             a.href = url;
-             a.download = `记账数据_${new Date().toISOString().split('T')[0]}.json`;
-             document.body.appendChild(a);
-             a.click();
-             document.body.removeChild(a);
-             URL.revokeObjectURL(url);
+            // 统一下载方法（iOS Safari 兼容）
+            Utils.downloadFile(jsonString, `记账数据_${new Date().toISOString().split('T')[0]}.json`, 'application/json');
 
-             this.showNotification('JSON数据导出成功！', 'success');
+            this.showNotification('JSON数据导出成功！', 'success');
          } catch (error) {
              console.error('导出JSON失败:', error);
              this.showNotification('导出失败，请重试', 'error');
@@ -910,16 +902,8 @@ class UIManager {
                  csvContent += `"${formattedDate}","${type}","${categoryName}",${amount},"${description}"\n`;
              });
              
-             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-             const url = URL.createObjectURL(blob);
-             
-             const a = document.createElement('a');
-             a.href = url;
-             a.download = `记账数据_${new Date().toISOString().split('T')[0]}.csv`;
-             document.body.appendChild(a);
-             a.click();
-             document.body.removeChild(a);
-             URL.revokeObjectURL(url);
+             // 使用统一的下载工具（iOS Safari 兼容）
+             Utils.downloadFile(csvContent, `记账数据_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8;');
 
              this.showNotification('Excel数据导出成功！', 'success');
          } catch (error) {
