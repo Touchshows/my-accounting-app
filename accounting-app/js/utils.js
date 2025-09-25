@@ -300,7 +300,7 @@ class Utils {
             Utils.exportToExcel(data, filename);
             return;
         }
-        
+
         // 创建工作表数据（直接创建对象数组）
         const worksheetData = data.map(transaction => {
             const category = storage.getCategories().find(c => c.id === transaction.category);
