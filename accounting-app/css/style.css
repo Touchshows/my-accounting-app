@@ -1,4 +1,3 @@
-/* 全局样式重置 */
 * {
     margin: 0;
     padding: 0;
@@ -11,7 +10,7 @@ body {
     min-height: 100vh;
     color: var(--text-primary);
     transition: background 0.3s ease, color 0.3s ease;
-    line-height: 1.6; /* 提高行高，增加可读性 */
+    line-height: 1.6;
 }
 
 .container {
@@ -20,16 +19,15 @@ body {
     padding: 0 20px;
 }
 
-/* 头部样式 - 优化 */
 .header {
     background: var(--header-bg);
-    backdrop-filter: blur(15px); /* 增强模糊效果 */
+    backdrop-filter: blur(15px);
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
     z-index: 100;
     transition: background 0.3s ease;
-    border-bottom: 1px solid var(--border-color); /* 添加底部边框 */
+    border-bottom: 1px solid var(--border-color);
 }
 
 .header .container {
@@ -43,7 +41,7 @@ body {
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--primary-color);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* 添加文字阴影 */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .nav {
@@ -60,22 +58,41 @@ body {
     transition: all 0.3s ease;
     font-weight: 500;
     color: var(--text-primary);
-    border: 1px solid transparent; /* 添加透明边框 */
+    border: 1px solid transparent;
 }
 
 .nav-btn:hover {
     background: var(--bg-secondary);
     border-color: var(--border-color);
-    transform: translateY(-1px); /* 添加悬浮效果 */
+    transform: translateY(-1px);
 }
 
 .nav-btn.active {
     background: var(--primary-color);
     color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); /* 添加阴影 */
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-/* 主内容区域 */
+.theme-toggle {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.theme-toggle:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
 .main {
     padding: 2rem 0;
 }
@@ -94,7 +111,6 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* 仪表板样式 - 优化 */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -103,14 +119,14 @@ body {
 }
 
 .balance-card, .income-card, .expense-card {
-    background: var(--card-bg-solid); /* 使用更不透明的背景 */
+    background: var(--card-bg-solid);
     padding: 1.5rem;
     border-radius: 15px;
     box-shadow: var(--shadow);
     text-align: center;
     transition: all 0.3s ease;
-    border: 1px solid var(--border-color); /* 添加边框 */
-    backdrop-filter: blur(10px); /* 添加背景模糊 */
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
 }
 
 .balance-card:hover, .income-card:hover, .expense-card:hover {
@@ -136,7 +152,7 @@ body {
     font-size: 2rem;
     font-weight: bold;
     margin-top: 0.5rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* 添加文字阴影 */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .income-amount {
@@ -147,7 +163,6 @@ body {
     color: var(--danger-color);
 }
 
-/* 快速操作按钮 - 优化 */
 .quick-actions {
     display: flex;
     gap: 1rem;
@@ -164,7 +179,7 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 120px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .income-btn {
@@ -189,7 +204,6 @@ body {
     box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
 }
 
-/* 最近交易 - 优化 */
 .recent-transactions {
     background: var(--card-bg-solid);
     padding: 1.5rem;
@@ -203,7 +217,7 @@ body {
 .recent-transactions h3 {
     margin-bottom: 1rem;
     color: var(--text-primary);
-    font-weight: 600; /* 增加字体粗细 */
+    font-weight: 600;
 }
 
 .transaction-list {
@@ -219,13 +233,13 @@ body {
     border-bottom: 1px solid var(--border-color);
     transition: background 0.2s ease;
     cursor: pointer;
-    border-radius: 8px; /* 添加圆角 */
+    border-radius: 8px;
     margin-bottom: 0.5rem;
 }
 
 .transaction-item:hover {
     background: var(--bg-secondary);
-    transform: translateX(2px); /* 添加悬浮效果 */
+    transform: translateX(2px);
 }
 
 .transaction-item:last-child {
@@ -238,7 +252,7 @@ body {
 }
 
 .transaction-category {
-    font-weight: 600; /* 增加字体粗细 */
+    font-weight: 600;
     margin-bottom: 0.25rem;
     color: var(--text-primary);
 }
@@ -266,7 +280,6 @@ body {
     color: var(--danger-color);
 }
 
-/* 设置页面样式 - 优化 */
 .settings-header {
     background: var(--card-bg-solid);
     padding: 1.5rem;
@@ -302,7 +315,6 @@ body {
     font-weight: 600;
 }
 
-/* 主题选择器样式 - 优化 */
 .theme-selector {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -398,7 +410,6 @@ body {
     font-size: 1rem;
 }
 
-/* 危险操作区域 */
 .danger-section {
     border-left: 4px solid var(--danger-color);
 }
@@ -410,7 +421,6 @@ body {
     font-style: italic;
 }
 
-/* 按钮样式 - 优化 */
 .btn-primary, .btn-secondary, .btn-danger, .btn-info {
     padding: 0.75rem 1.5rem;
     border: none;
@@ -466,7 +476,6 @@ body {
     box-shadow: 0 4px 8px rgba(49, 130, 206, 0.3);
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
     .header .container {
         flex-direction: column;
@@ -512,66 +521,4 @@ body {
         margin-right: -10px;
         border-radius: 0;
     }
-}
-
-/* Mobile polish: iOS safe areas and reduced gradient intensity */
-body {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.header {
-  padding-top: env(safe-area-inset-top);
-}
-
-.main {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* Smooth scrolling on iOS lists */
-.transaction-list {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Compact buttons on tablets/phones */
-@media (max-width: 768px) {
-  .nav-btn {
-    padding: 0.55rem 0.9rem;
-    border-radius: 14px;
-  }
-}
-
-/* Small-phone refinements */
-@media (max-width: 480px) {
-  body {
-    background: var(--bg-primary); /* Remove strong gradient on small screens */
-  }
-  .container {
-    padding: 0 14px;
-  }
-  .main {
-    padding: 1rem 0 calc(1rem + env(safe-area-inset-bottom));
-  }
-  .nav {
-    gap: 0.5rem;
-    justify-content: center;
-  }
-  .balance-card,
-  .income-card,
-  .expense-card,
-  .recent-transactions,
-  .settings-header,
-  .settings-section {
-    margin-left: -14px;
-    margin-right: -14px;
-    border-radius: 12px;
-  }
-  .balance-card {
-    /* Use cleaner primary gradient on mobile balance card */
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  }
-  .balance-amount,
-  .income-amount,
-  .expense-amount {
-    font-size: 2.2rem;
-  }
 }
