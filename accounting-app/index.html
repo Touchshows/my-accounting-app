@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components.css">
-    <!-- 已移除外部 CDN 的 XLSX 依赖，避免在部分网络环境下阻塞页面加载。若需要真·Excel导出，可改为本地文件或按需加载。 -->
+    <!-- 在 </head> 标签前添加 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <div id="notification-container"></div>
