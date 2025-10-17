@@ -73,6 +73,15 @@ body {
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
+.nav-back {
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .theme-toggle {
     background: var(--card-bg);
     border: 1px solid var(--border-color);

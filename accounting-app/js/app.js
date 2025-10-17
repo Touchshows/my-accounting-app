@@ -11,6 +11,7 @@ class AccountingApp {
         this.currentTransactionType = null;
         this.editingTransactionId = null;
         this.currentPage = 'dashboard';
+        this.pageStack = [];
 
         // Make it globally accessible
         window.app = this; 
@@ -25,10 +26,15 @@ class AccountingApp {
     bindGlobalEvents() {
         // Navigation
         document.querySelector('.nav').addEventListener('click', (e) => {
-            if (e.target.matches('.nav-btn')) {
+            if (e.target.matches('.nav-btn') && e.target.dataset.page) {
                 this.navigateTo(e.target.dataset.page);
             }
         });
+
+        const backBtn = document.getElementById('nav-back');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => this.goBack());
+        }
 
         // Quick add buttons
         document.getElementById('quick-income').addEventListener('click', () => {
@@ -82,8 +88,13 @@ class AccountingApp {
         });
     }
 
-    navigateTo(page, params = {}) {
+    navigateTo(page, params = {}, options = {}) {
+        if (!page) return;
         this.currentPage = page;
+        const last = this.pageStack[this.pageStack.length - 1];
+        if (!options.skipStackPush && last !== page) {
+            this.pageStack.push(page);
+        }
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         const pageElement = document.getElementById(`${page}-page`);
         if (pageElement) {
@@ -94,6 +105,11 @@ class AccountingApp {
         const navBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
         if (navBtn) {
             navBtn.classList.add('active');
+        }
+
+        const backBtn = document.getElementById('nav-back');
+        if (backBtn) {
+            backBtn.disabled = this.pageStack.length <= 1;
         }
 
         switch (page) {
@@ -122,6 +138,17 @@ class AccountingApp {
             case 'settings':
                 this.uiManager.loadSettingsPage();
                 break;
+        }
+    }
+
+    goBack() {
+        if (this.pageStack.length > 1) {
+            this.pageStack.pop();
+            const prev = this.pageStack[this.pageStack.length - 1];
+            this.navigateTo(prev, {}, { skipStackPush: true });
+        } else {
+            const backBtn = document.getElementById('nav-back');
+            if (backBtn) backBtn.disabled = true;
         }
     }
 }
