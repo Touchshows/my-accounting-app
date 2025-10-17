@@ -160,18 +160,22 @@ class UIManager {
 
         document.getElementById('search-input').addEventListener('input', () => {
             this.filterTransactions();
+            if (window.app) window.app.syncTransactionsFiltersState();
         });
 
         document.getElementById('type-filter').addEventListener('change', () => {
             this.filterTransactions();
+            if (window.app) window.app.syncTransactionsFiltersState();
         });
 
         document.getElementById('category-filter').addEventListener('change', () => {
             this.filterTransactions();
+            if (window.app) window.app.syncTransactionsFiltersState();
         });
 
         document.getElementById('date-filter').addEventListener('change', () => {
             this.filterTransactions();
+            if (window.app) window.app.syncTransactionsFiltersState();
         });
 
         this.loadCategoryFilterOptions();

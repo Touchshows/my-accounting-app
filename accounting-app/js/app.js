@@ -20,11 +20,11 @@ class AccountingApp {
     init() {
         this.bindGlobalEvents();
         this.themeManager.init();
-        this.navigateTo('dashboard');
+        const initial = this.parseHashState() || { page: 'dashboard', params: {} };
+        this.navigateTo(initial.page, initial.params, { historyReplace: true });
     }
 
     bindGlobalEvents() {
-        // Navigation
         document.querySelector('.nav').addEventListener('click', (e) => {
             if (e.target.matches('.nav-btn') && e.target.dataset.page) {
                 this.navigateTo(e.target.dataset.page);
@@ -35,6 +35,16 @@ class AccountingApp {
         if (backBtn) {
             backBtn.addEventListener('click', () => this.goBack());
         }
+
+        window.addEventListener('popstate', (e) => {
+            if (this.pageStack.length > 1) {
+                this.pageStack.pop();
+            }
+            const st = e.state;
+            if (st && st.page) {
+                this.navigateTo(st.page, st.params || {}, { skipStackPush: true });
+            }
+        });
 
         // Quick add buttons
         document.getElementById('quick-income').addEventListener('click', () => {
@@ -90,10 +100,12 @@ class AccountingApp {
 
     navigateTo(page, params = {}, options = {}) {
         if (!page) return;
+        this.updateTopStateFromDOM();
         this.currentPage = page;
+        const newState = { page, params };
         const last = this.pageStack[this.pageStack.length - 1];
-        if (!options.skipStackPush && last !== page) {
-            this.pageStack.push(page);
+        if (!options.skipStackPush && (!last || last.page !== page)) {
+            this.pageStack.push(newState);
         }
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         const pageElement = document.getElementById(`${page}-page`);
@@ -118,11 +130,19 @@ class AccountingApp {
                 break;
             case 'transactions':
                 this.uiManager.loadTransactionsPage();
-                if (params.date) {
-                    const dateFilter = document.getElementById('date-filter');
-                    if (dateFilter) {
-                        dateFilter.value = params.date;
-                        this.uiManager.filterTransactions();
+                const s = document.getElementById('search-input');
+                const tf = document.getElementById('type-filter');
+                const cf = document.getElementById('category-filter');
+                const df = document.getElementById('date-filter');
+                if (s && params.search != null) s.value = params.search;
+                if (tf && params.type != null) tf.value = params.type;
+                if (cf && params.category != null) cf.value = params.category;
+                if (df && params.date != null) df.value = params.date;
+                this.uiManager.filterTransactions();
+                if (params.scrollTop != null) {
+                    const list = document.getElementById('transactions-list');
+                    if (list) {
+                        setTimeout(() => { list.scrollTop = params.scrollTop || 0; }, 0);
                     }
                 }
                 break;
@@ -139,17 +159,90 @@ class AccountingApp {
                 this.uiManager.loadSettingsPage();
                 break;
         }
+
+        const urlHash = this.buildHash(newState);
+        if (options.historyReplace) {
+            window.history.replaceState(newState, '', urlHash);
+        } else if (!options.skipHistoryPush) {
+            window.history.pushState(newState, '', urlHash);
+        }
     }
 
     goBack() {
         if (this.pageStack.length > 1) {
-            this.pageStack.pop();
-            const prev = this.pageStack[this.pageStack.length - 1];
-            this.navigateTo(prev, {}, { skipStackPush: true });
+            window.history.back();
         } else {
             const backBtn = document.getElementById('nav-back');
             if (backBtn) backBtn.disabled = true;
         }
+    }
+
+    updateTopStateFromDOM() {
+        if (!this.pageStack.length) return;
+        const top = this.pageStack[this.pageStack.length - 1];
+        if (!top || !top.page) return;
+        if (top.page === 'transactions') {
+            const s = document.getElementById('search-input');
+            const tf = document.getElementById('type-filter');
+            const cf = document.getElementById('category-filter');
+            const df = document.getElementById('date-filter');
+            const list = document.getElementById('transactions-list');
+            top.params = {
+                search: s ? s.value : '',
+                type: tf ? tf.value : '',
+                category: cf ? cf.value : '',
+                date: df ? df.value : '',
+                scrollTop: list ? list.scrollTop : 0
+            };
+        }
+    }
+
+    syncTransactionsFiltersState() {
+        if (!this.pageStack.length) return;
+        const top = this.pageStack[this.pageStack.length - 1];
+        if (!top || top.page !== 'transactions') return;
+        const s = document.getElementById('search-input');
+        const tf = document.getElementById('type-filter');
+        const cf = document.getElementById('category-filter');
+        const df = document.getElementById('date-filter');
+        const list = document.getElementById('transactions-list');
+        top.params = {
+            search: s ? s.value : '',
+            type: tf ? tf.value : '',
+            category: cf ? cf.value : '',
+            date: df ? df.value : '',
+            scrollTop: list ? list.scrollTop : 0
+        };
+        const urlHash = this.buildHash(top);
+        window.history.replaceState(top, '', urlHash);
+    }
+
+    buildHash(state) {
+        const p = state.params || {};
+        const q = [];
+        Object.keys(p).forEach(k => {
+            if (p[k] !== '' && p[k] != null && k !== 'scrollTop') {
+                q.push(`${encodeURIComponent(k)}=${encodeURIComponent(p[k])}`);
+            }
+        });
+        const qs = q.length ? `?${q.join('&')}` : '';
+        return `#${state.page}${qs}`;
+    }
+
+    parseHashState() {
+        const h = window.location.hash || '';
+        if (!h || h.length < 2) return null;
+        const pure = h.slice(1);
+        const [page, query] = pure.split('?');
+        if (!page) return null;
+        const params = {};
+        if (query) {
+            query.split('&').forEach(pair => {
+                const [k, v] = pair.split('=');
+                if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+            });
+        }
+        return { page, params };
     }
 }
 
